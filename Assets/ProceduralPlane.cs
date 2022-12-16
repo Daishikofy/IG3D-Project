@@ -15,10 +15,8 @@ public class ProceduralPlane : MonoBehaviour
     Texture2D texture;
     int width, height;
 
-    private void OnEnable()
+    private void Start()
     {
-
-        //var mesh = GenerateMesh();
         meshFilter = GetComponent<MeshFilter>();
 
         Color[] colors =  new Color[meshFilter.mesh.vertexCount];
@@ -36,6 +34,7 @@ public class ProceduralPlane : MonoBehaviour
         UpdateWorldVerticesPosition();
 
         int trianglesCount = meshFilter.mesh.triangles.Length / 3;
+        Debug.Log("trianglesCount: " + trianglesCount);
         if (trianglesCount <= textureWidth)
         {
             width = resolution * trianglesCount;
@@ -46,6 +45,8 @@ public class ProceduralPlane : MonoBehaviour
             width = textureWidth * resolution;
             height = ((trianglesCount / textureWidth) + 1) * resolution;
         }
+        Debug.Log("width: " + width);
+        Debug.Log("height: " + height);
 
         texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/3D/ProceduralTexture.asset");
 
@@ -57,6 +58,8 @@ public class ProceduralPlane : MonoBehaviour
 
         texture.filterMode = FilterMode.Point;
         texture.wrapMode = TextureWrapMode.Clamp;
+
+        GenerateTexture();
     }
 
     private void Update()
@@ -116,23 +119,6 @@ public class ProceduralPlane : MonoBehaviour
         meshFilter.mesh.colors = colors;
     }
 
-
-    Mesh GenerateMesh()
-    {
-        var mesh = new Mesh { name = "Procedural Mesh" };
-
-
-        Vector3[] startVertices = new Vector3[] { Vector3.up, Vector3.right, Vector3.zero , Vector3.left};
-        int[] triangles = new int[] { 0, 1, 2, 2, 3, 0 };
-        Color[] colors = new Color[] { Color.red, Color.green, Color.blue, Color.yellow };
-
-        mesh.vertices = startVertices;
-        mesh.triangles = triangles;
-        mesh.colors = colors;
-
-        return mesh;
-    }
-
     public void SetActiveColor(string hexColor)
     {
         Color outColor;
@@ -172,7 +158,8 @@ public class ProceduralPlane : MonoBehaviour
     public void GenerateTexture()
     {
         Vector2Int us = new Vector2Int(0,0);
-        Vector2Int ud = new Vector2Int(0,0);
+        Vector2Int ud = new Vector2Int(0, 0);
+
         int[] triangles = meshFilter.mesh.triangles;
         Vector2[] uv = meshFilter.mesh.uv;
         Color[] colors = new Color[width * height];
@@ -195,6 +182,7 @@ public class ProceduralPlane : MonoBehaviour
                     else if (i == (resolution - 1) && j == 0)
                     {
                         SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 1]]);
+                        SetPixel(colors, i + ud.x, j + ud.y, meshFilter.mesh.colors[triangles[k + 1]]);
                         uv[triangles[k + 1]].x = us.x;
                         uv[triangles[k + 1]].y = us.y;
                     }
@@ -225,29 +213,13 @@ public class ProceduralPlane : MonoBehaviour
             uv[i].y /= height - 1;
         }
         
-        meshFilter.mesh.uv = uv;
+        meshFilter.sharedMesh.uv = uv;
 
         File.WriteAllBytes("Assets/3D/ProceduralTexture.png", texture.EncodeToPNG());
-        //AssetDatabase.CreateAsset(meshFilter.mesh, "Assets/3D/" + meshFilter.mesh.name + ".asset");
     }
 
     private void OnVertexColorUpdate(int vertex)
     {
-        /*
-        var colors = texture.GetPixels();
-        for (int i = 0; i < meshFilter.mesh.triangles.Length; i++)
-        {
-            if(meshFilter.mesh.triangles[i] == vertex)
-            {
-                int triangle = i - i % 3;
-                int x = triangle * resolution
-                if(i % 3 == 0)
-                {
-
-                }
-            }
-        }*/
-
         Vector2Int us = new Vector2Int(0, 0);
         Vector2Int ud = new Vector2Int(0, 0);
 
@@ -288,6 +260,9 @@ public class ProceduralPlane : MonoBehaviour
 
         texture.SetPixels(0, 0, width, height, colors);
         texture.Apply();
+
+        File.WriteAllBytes("Assets/3D/ProceduralTexture.png", texture.EncodeToPNG());
+
     }
 
     private void SetPixel(Color[] texture, int x, int y, Color color)

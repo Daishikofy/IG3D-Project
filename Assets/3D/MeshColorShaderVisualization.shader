@@ -5,6 +5,7 @@ Shader "Custom/MeshColorShaderVisualisation"
 	Properties
 	{
 		_MainTex("Texture", 2D) = "white" {}
+		_bLight("Use Lighting", Integer) = 1
 	}
 
 	Subshader
@@ -24,6 +25,7 @@ Shader "Custom/MeshColorShaderVisualisation"
 			#include "UnityStandardBRDF.cginc"
 
 			sampler2D _MainTex;
+			int _bLight;
 
 			struct VertexData
 			{
@@ -60,7 +62,11 @@ Shader "Custom/MeshColorShaderVisualisation"
 				float3 color = tex2D(_MainTex, i.uv);
 
 				float3 diffuse = color * lightColor * DotClamped(lightDir, i.normal);
-				return float4(ambiant + diffuse, 1);
+
+				if (_bLight == 1)
+					return float4(ambiant + diffuse, 1);
+				return float4(color, 1);
+				
 			}
 
 			ENDCG
