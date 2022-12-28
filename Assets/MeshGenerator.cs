@@ -19,6 +19,7 @@ public class MeshGenerator : MonoBehaviour
         var mesh = new Mesh();
 
         var vertices = new Vector3[width * height];
+        var uv = new Vector2[width * height];
         var triangles = new List<int>();
 
         for (int i = 0; i < width; i++)
@@ -53,6 +54,8 @@ public class MeshGenerator : MonoBehaviour
 
         mesh.vertices = vertices;
         mesh.triangles = triangles.ToArray();
+
+        mesh.uv = uv;
 
         return mesh;
     }

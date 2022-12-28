@@ -20,7 +20,6 @@ public class ProceduralPlane : MonoBehaviour
         meshFilter = GetComponent<MeshFilter>();
 
         Color[] colors =  new Color[meshFilter.mesh.vertexCount];
-        meshFilter.mesh.uv = new Vector2[meshFilter.mesh.vertexCount];
 
         for (int i = 0; i < colors.Length; i++)
         {
@@ -34,7 +33,7 @@ public class ProceduralPlane : MonoBehaviour
         UpdateWorldVerticesPosition();
 
         int trianglesCount = meshFilter.mesh.triangles.Length / 3;
-        Debug.Log("trianglesCount: " + trianglesCount);
+
         if (trianglesCount <= textureWidth)
         {
             width = resolution * trianglesCount;
@@ -45,8 +44,6 @@ public class ProceduralPlane : MonoBehaviour
             width = textureWidth * resolution;
             height = ((trianglesCount / textureWidth) + 1) * resolution;
         }
-        Debug.Log("width: " + width);
-        Debug.Log("height: " + height);
 
         texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/3D/ProceduralTexture.asset");
 
@@ -117,6 +114,7 @@ public class ProceduralPlane : MonoBehaviour
         colors[minId] = activeColor;
 
         meshFilter.mesh.colors = colors;
+        //OnVertexColorUpdate(minId);
     }
 
     public void SetActiveColor(string hexColor)
@@ -182,7 +180,7 @@ public class ProceduralPlane : MonoBehaviour
                     else if (i == (resolution - 1) && j == 0)
                     {
                         SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 1]]);
-                        SetPixel(colors, i + ud.x, j + ud.y, meshFilter.mesh.colors[triangles[k + 1]]);
+                        SetPixel(colors, i + ud.x, j + ud.y, Color.black);
                         uv[triangles[k + 1]].x = us.x;
                         uv[triangles[k + 1]].y = us.y;
                     }
@@ -200,12 +198,11 @@ public class ProceduralPlane : MonoBehaviour
                 }
             }
 
-            ud.y += resolution;
-        }  
+            ud.x += resolution;
+        }
 
         texture.SetPixels(0, 0, width, height, colors);
         texture.Apply();
-
 
         for (int i = 0; i < uv.Length; i++)
         {
@@ -213,9 +210,28 @@ public class ProceduralPlane : MonoBehaviour
             uv[i].y /= height - 1;
         }
         
-        meshFilter.sharedMesh.uv = uv;
+        for (int i = 0; i < uv.Length; i++)
+        {
+            Debug.Log(i + " : (" + uv[i].x + ", " + uv[i].y + ")");
+        }
+
+        SaveModelUV(uv);
 
         File.WriteAllBytes("Assets/3D/ProceduralTexture.png", texture.EncodeToPNG());
+    }
+
+    private void SaveModelUV(Vector2[] uv)
+    {
+        meshFilter.mesh.SetUVs(0, uv);
+        var name = meshFilter.mesh.name;
+        if(meshFilter.mesh.name.Length - 9 > 0)
+        {
+            name = name.Remove(meshFilter.mesh.name.Length - 9);
+            Debug.Log(name);
+        }
+ 
+        AssetDatabase.SaveAssets();
+        //AssetDatabase.CreateAsset(meshFilter.mesh, "Assets/3D/" + name + ".asset"); 
     }
 
     private void OnVertexColorUpdate(int vertex)
@@ -224,7 +240,8 @@ public class ProceduralPlane : MonoBehaviour
         Vector2Int ud = new Vector2Int(0, 0);
 
         int[] triangles = meshFilter.mesh.triangles;
-        Color[] colors = new Color[width * height];
+        Vector2[] uv = meshFilter.mesh.uv;
+        Color[] colors = meshFilter.mesh.colors;
 
         for (int k = 0; k < triangles.Length; k += 3)
         {
@@ -237,36 +254,36 @@ public class ProceduralPlane : MonoBehaviour
 
                     if (i == 0 && j == 0)
                     {
-                        SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 0]]);
+                        if (vertex == triangles[k + 0])
+                            SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 0]]);
                     }
                     else if (i == (resolution - 1) && j == 0)
                     {
-                        SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 1]]);
+                        if (vertex == triangles[k + 1])
+                        {
+                            SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 1]]);
+                            SetPixel(colors, i + ud.x, j + ud.y, Color.black);
+                        }
                     }
                     else if (i == (resolution - 1) && j == (resolution - 1))
                     {
-                        SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 2]]);
-                    }
-                    else
-                    {
-                        SetPixel(colors, us.x, us.y, Color.white);
-                        SetPixel(colors, i + ud.x, j + ud.y, Color.white);
+                        if (vertex == triangles[k + 1])
+                        {
+                            SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 2]]);
+                        }
                     }
                 }
             }
 
-            ud.y += resolution;
+            ud.x += resolution;
         }
 
         texture.SetPixels(0, 0, width, height, colors);
         texture.Apply();
-
-        File.WriteAllBytes("Assets/3D/ProceduralTexture.png", texture.EncodeToPNG());
-
     }
 
     private void SetPixel(Color[] texture, int x, int y, Color color)
     {
-        texture[x + y * resolution] = color;
+        texture[x + y * width] = color;
     }
 }
