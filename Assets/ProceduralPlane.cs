@@ -199,6 +199,11 @@ public class ProceduralPlane : MonoBehaviour
             }
 
             ud.x += resolution;
+            if(ud.x >= width)
+            {
+                ud.x = 0;
+                ud.y += resolution;
+            }
         }
 
         texture.SetPixels(0, 0, width, height, colors);
@@ -209,20 +214,22 @@ public class ProceduralPlane : MonoBehaviour
             uv[i].x /= width - 1;
             uv[i].y /= height - 1;
         }
-        
+      /*  
         for (int i = 0; i < uv.Length; i++)
         {
             Debug.Log(i + " : (" + uv[i].x + ", " + uv[i].y + ")");
-        }
-
-        SaveModelUV(uv);
+        }*/
 
         File.WriteAllBytes("Assets/3D/ProceduralTexture.png", texture.EncodeToPNG());
+
+        SaveModelUV(uv);
     }
 
     private void SaveModelUV(Vector2[] uv)
     {
-        meshFilter.mesh.SetUVs(0, uv);
+        meshFilter.sharedMesh.SetUVs(0, uv);
+        meshFilter.sharedMesh.MarkModified();
+        Debug.Log("UV SETUP");
         var name = meshFilter.mesh.name;
         if(meshFilter.mesh.name.Length - 9 > 0)
         {
@@ -230,7 +237,7 @@ public class ProceduralPlane : MonoBehaviour
             Debug.Log(name);
         }
  
-        AssetDatabase.SaveAssets();
+        //AssetDatabase.SaveAssets();
         //AssetDatabase.CreateAsset(meshFilter.mesh, "Assets/3D/" + name + ".asset"); 
     }
 
