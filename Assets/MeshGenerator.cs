@@ -18,15 +18,16 @@ public class MeshGenerator : MonoBehaviour
     {
         var mesh = new Mesh();
 
-        var vertices = new Vector3[width * height];
-        var uv = new Vector2[width * height];
+        var vertices = new List<Vector3>();
+
+        var vertices_init = new Vector3[width * height];
         var triangles = new List<int>();
 
         for (int i = 0; i < width; i++)
         {
             for (int j = 0; j < height; j++)
             {
-                vertices[j + i * width] = new Vector3(j, i);
+                vertices_init[j + i * width] = new Vector3(j, i);
             }
         }
 
@@ -52,9 +53,16 @@ public class MeshGenerator : MonoBehaviour
             }
         }
 
-        mesh.vertices = vertices;
-        mesh.triangles = triangles.ToArray();
+        for(int i = 0; i < triangles.Count; i++)
+        {
+            vertices.Add(vertices_init[triangles[i]]);
+            triangles[i] = i;
+        }
 
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = triangles.ToArray();
+        
+        var uv = new Vector2[vertices.Count];
         mesh.uv = uv;
 
         return mesh;

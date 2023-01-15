@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -18,6 +19,11 @@ public class ProceduralPlane : MonoBehaviour
     private void Start()
     {
         meshFilter = GetComponent<MeshFilter>();
+
+        for (int i = 0; i < meshFilter.mesh.uv.Length; i++)
+        {
+            Debug.Log(i + " : (" + meshFilter.sharedMesh.uv[i].x + ", " + meshFilter.sharedMesh.uv[i].y + ")");
+        }
 
         Color[] colors =  new Color[meshFilter.mesh.vertexCount];
 
@@ -93,6 +99,7 @@ public class ProceduralPlane : MonoBehaviour
         }
 
         minDist = Vector3.Distance(worldVertices[0], hitWorldPosition);
+        var minIds = new List<int>();
         int minId = 0;
 
         for (int i = 1; i < mesh.vertexCount; i++)
@@ -106,14 +113,28 @@ public class ProceduralPlane : MonoBehaviour
             }
         }
 
-        if(minDist > 1)
-        { return;  }
+        if (minDist > 1)
+        { return; }
+
+        minIds.Add(minId);
+        for (int i = 0; i < mesh.vertexCount; i++)
+        {
+            float newDist = Vector3.Distance(worldVertices[i], worldVertices[minId]);
+            if (newDist <= float.Epsilon)
+            {
+                minIds.Add(i);
+            }
+        }
 
         Debug.DrawLine(Camera.main.transform.position, worldVertices[minId], activeColor);
 
-        colors[minId] = activeColor;
+        foreach (int id in minIds)
+        {
+            colors[id] = activeColor;
+        }
 
         meshFilter.mesh.colors = colors;
+
         //OnVertexColorUpdate(minId);
     }
 
@@ -160,7 +181,7 @@ public class ProceduralPlane : MonoBehaviour
 
         int[] triangles = meshFilter.mesh.triangles;
         Vector2[] uv = meshFilter.mesh.uv;
-        Color[] colors = new Color[width * height];
+        Color[] textureColors = new Color[width * height];
 
         for (int k = 0; k < triangles.Length; k += 3)
         {
@@ -173,27 +194,27 @@ public class ProceduralPlane : MonoBehaviour
 
                     if (i == 0 && j == 0)
                     {
-                        SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 0]]);
+                        SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 0]]);
                         uv[triangles[k + 0]].x = us.x;
                         uv[triangles[k + 0]].y = us.y;
                     }
                     else if (i == (resolution - 1) && j == 0)
                     {
-                        SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 1]]);
-                        SetPixel(colors, i + ud.x, j + ud.y, Color.black);
+                        SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 1]]);
+                        SetPixel(textureColors, i + ud.x, j + ud.y, Color.black);
                         uv[triangles[k + 1]].x = us.x;
                         uv[triangles[k + 1]].y = us.y;
                     }
                     else if (i == (resolution - 1) && j == (resolution - 1))
                     {
-                        SetPixel(colors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 2]]);
+                        SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 2]]);
                         uv[triangles[k + 2]].x = us.x;
                         uv[triangles[k + 2]].y = us.y;
                     }
                     else
                     {
-                        SetPixel(colors, us.x , us.y, Color.white);
-                        SetPixel(colors, i + ud.x, j + ud.y, Color.white);
+                        SetPixel(textureColors, us.x , us.y, Color.white);
+                        SetPixel(textureColors, i + ud.x, j + ud.y, Color.white);
                     }
                 }
             }
@@ -201,7 +222,7 @@ public class ProceduralPlane : MonoBehaviour
             ud.x += resolution;
         }
 
-        texture.SetPixels(0, 0, width, height, colors);
+        texture.SetPixels(0, 0, width, height, textureColors);
         texture.Apply();
 
         for (int i = 0; i < uv.Length; i++)
@@ -222,14 +243,9 @@ public class ProceduralPlane : MonoBehaviour
 
     private void SaveModelUV(Vector2[] uv)
     {
-        meshFilter.mesh.SetUVs(0, uv);
-        var name = meshFilter.mesh.name;
-        if(meshFilter.mesh.name.Length - 9 > 0)
-        {
-            name = name.Remove(meshFilter.mesh.name.Length - 9);
-            Debug.Log(name);
-        }
- 
+        meshFilter.sharedMesh.uv = uv;
+        meshFilter.sharedMesh.MarkModified();
+
         AssetDatabase.SaveAssets();
         //AssetDatabase.CreateAsset(meshFilter.mesh, "Assets/3D/" + name + ".asset"); 
     }
