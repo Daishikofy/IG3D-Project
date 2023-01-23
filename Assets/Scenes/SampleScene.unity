@@ -287,9 +287,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6fbd41e397e19546a91bdf85f361673, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 5
-  height: 5
-  meshName: 5x5Plane
+  width: 3
+  height: 3
+  meshName: 3x3Plane
 --- !u!4 &90814715
 Transform:
   m_ObjectHideFlags: 0
@@ -1667,7 +1667,7 @@ Transform:
   m_GameObject: {fileID: 903322611}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -11.03, y: -11.3, z: -12}
-  m_LocalScale: {x: 2.02, y: 2.02, z: 2.02}
+  m_LocalScale: {x: 4.56, y: 4.56, z: 4.56}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2077913896}
@@ -2207,7 +2207,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1177841528}
-  m_Mesh: {fileID: 4300000, guid: bb4316aaa30f61c47849bcfd9cf783f9, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 3207893979dd33949b167d759b7880cc, type: 2}
 --- !u!4 &1177841531
 Transform:
   m_ObjectHideFlags: 0
@@ -2217,7 +2217,7 @@ Transform:
   m_GameObject: {fileID: 1177841528}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 4.35, y: -9.3, z: 0}
-  m_LocalScale: {x: 3.19, y: 3.19, z: 3.19}
+  m_LocalScale: {x: 5.72, y: 5.72, z: 5.72}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
@@ -3353,8 +3353,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 528b370a801959e48b94ecdaf0c89cf3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resolution: 3
-  textureWidth: 5
+  resolution: 2
+  textureWidth: 4
 --- !u!23 &2077913894
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3404,7 +3404,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2077913892}
-  m_Mesh: {fileID: 4300000, guid: bb4316aaa30f61c47849bcfd9cf783f9, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 3207893979dd33949b167d759b7880cc, type: 2}
 --- !u!4 &2077913896
 Transform:
   m_ObjectHideFlags: 0
