@@ -7,11 +7,25 @@ public class MeshGenerator : MonoBehaviour
 {
     public int width, height;
     public string meshName;
+    public Mesh meshToModify;
 
     public void GenerateMesh()
     {
-        Mesh mesh = GeneratePlane();
-        AssetDatabase.CreateAsset(mesh, "Assets/3D/" + meshName + ".asset");
+        if (meshToModify != null)
+        {
+            Mesh mesh = DuplicateVerticesOfMesh(meshToModify);
+            if (!AssetDatabase.Contains(mesh))
+            {
+                AssetDatabase.CreateAsset(mesh, "Assets/3D/" + meshToModify.name + ".asset");
+                AssetDatabase.SaveAssets();
+            }
+        }
+        else
+        {
+            Mesh mesh = GeneratePlane();
+            AssetDatabase.CreateAsset(mesh, "Assets/3D/" + meshName + ".asset");
+        }
+
     }
 
     private Mesh GeneratePlane()
@@ -66,5 +80,31 @@ public class MeshGenerator : MonoBehaviour
         mesh.uv = uv;
 
         return mesh;
+    }
+
+    private Mesh DuplicateVerticesOfMesh(Mesh mesh)
+    {
+        var newMesh = new Mesh();
+        var vertices = new List<Vector3>();
+        var triangles = mesh.triangles;
+        var normal = new List<Vector3>();
+
+        for (int i = 0; i < mesh.triangles.Length; i++)
+        {
+            int index = mesh.triangles[i];
+
+            vertices.Add(mesh.vertices[index]);
+            normal.Add(mesh.normals[index]);
+
+            triangles[i] = i;
+        }
+
+        newMesh.vertices = vertices.ToArray();
+
+        var uv = new Vector2[vertices.Count];
+        newMesh.uv = uv;
+        newMesh.triangles = triangles;
+        newMesh.normals = normal.ToArray();
+        return newMesh;
     }
 }

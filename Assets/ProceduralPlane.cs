@@ -12,6 +12,7 @@ public class ProceduralPlane : MonoBehaviour
     Color activeColor = Color.black;
     Vector3[] worldVertices;
     MeshFilter meshFilter;
+    Vector2[] meshUvs;
 
     Texture2D texture;
     int width, height;
@@ -201,7 +202,7 @@ public class ProceduralPlane : MonoBehaviour
                     else if (i == (resolution - 1) && j == 0)
                     {
                         SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 1]]);
-                        
+
                         var meanColor = (meshFilter.mesh.colors[triangles[k + 0]] + meshFilter.mesh.colors[triangles[k + 2]]) / 2;
                         SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);
                         uv[triangles[k + 1]].x = us.x;
@@ -218,15 +219,15 @@ public class ProceduralPlane : MonoBehaviour
                         var meanColor = (meshFilter.mesh.colors[triangles[k + 0]] + meshFilter.mesh.colors[triangles[k + 2]] + meshFilter.mesh.colors[triangles[k + 0]]) / 3;
                         SetPixel(textureColors, us.x , us.y, meanColor);
                         SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);
+
                     }
                 }
             }
-
             ud.x += resolution;
-            if(ud.x >= width) 
-            { 
-                ud.y += resolution;
+            if(ud.x >= width)
+            {
                 ud.x = 0;
+                ud.y += resolution;
             }
         }
 
@@ -238,23 +239,35 @@ public class ProceduralPlane : MonoBehaviour
             uv[i].x /= width - 1;
             uv[i].y /= height - 1;
         }
-        
+      /*  
         for (int i = 0; i < uv.Length; i++)
         {
             Debug.Log(i + " : (" + uv[i].x + ", " + uv[i].y + ")");
-        }
+        }*/
 
         File.WriteAllBytes("Assets/3D/ProceduralTexture.png", texture.EncodeToPNG());
-        SaveModelUV(uv);
+        meshUvs = uv;
+
+        SaveModelUV();
     }
 
-    private void SaveModelUV(Vector2[] uv)
+    public void SaveModelUV()
     {
-        meshFilter.sharedMesh.uv = uv;     
-        meshFilter.sharedMesh.MarkModified();
+        meshFilter.sharedMesh.SetUVs(0, meshUvs);
 
-        AssetDatabase.SaveAssets();
-        AssetDatabase.CreateAsset(meshFilter.mesh, "Assets/3D/" + meshFilter.sharedMesh.name + ".asset"); 
+        var name = meshFilter.mesh.name;
+        if(meshFilter.mesh.name.Length - 9 > 0)
+        {
+            name = name.Remove(meshFilter.mesh.name.Length - 9);
+            Debug.Log(name);
+        }
+
+        if (! AssetDatabase.Contains(meshFilter.mesh))
+        {
+            AssetDatabase.CreateAsset(meshFilter.mesh, "Assets/3D/" + name + ".asset");
+            AssetDatabase.SaveAssets();
+        }
+
     }
 
     private void OnVertexColorUpdate(int vertex)
