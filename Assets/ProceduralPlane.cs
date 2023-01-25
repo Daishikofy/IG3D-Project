@@ -8,6 +8,7 @@ public class ProceduralPlane : MonoBehaviour
 {
     public int resolution = 3;
     public int textureWidth = 100;
+    public int penSize = 3;
 
     Color activeColor = Color.black;
     Vector3[] worldVertices;
@@ -88,6 +89,9 @@ public class ProceduralPlane : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
         var hits = Physics.RaycastAll(ray);
+        int hitTriangleId = -1;
+        Vector2 hitTriangleUV = Vector2.left;
+
         float minDist = float.PositiveInfinity;
         foreach (var hit in hits)
         {
@@ -96,8 +100,12 @@ public class ProceduralPlane : MonoBehaviour
             {
                 minDist = newDist;
                 hitWorldPosition = hit.point;
+                hitTriangleId = hit.triangleIndex;
+                hitTriangleUV = hit.textureCoord;
             }
         }
+        if(!(hitTriangleUV.x < 0))
+            PaintTexture(hitTriangleUV, activeColor);
 
         minDist = Vector3.Distance(worldVertices[0], hitWorldPosition);
         var minIds = new List<int>();
@@ -216,9 +224,10 @@ public class ProceduralPlane : MonoBehaviour
                     }
                     else
                     {
+                        /*
                         var meanColor = (meshFilter.mesh.colors[triangles[k + 0]] + meshFilter.mesh.colors[triangles[k + 2]] + meshFilter.mesh.colors[triangles[k + 0]]) / 3;
                         SetPixel(textureColors, us.x , us.y, meanColor);
-                        SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);
+                        SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);*/
 
                     }
                 }
@@ -231,7 +240,7 @@ public class ProceduralPlane : MonoBehaviour
             }
         }
 
-        texture.SetPixels(0, 0, width, height, textureColors);
+        //texture.SetPixels(0, 0, width, height, textureColors);
         texture.Apply();
 
         for (int i = 0; i < uv.Length; i++)
@@ -249,6 +258,21 @@ public class ProceduralPlane : MonoBehaviour
         meshUvs = uv;
 
         SaveModelUV();
+    }
+
+    void PaintTexture(Vector2 uv, Color color)
+    {
+        int x = (int)(texture.width * uv.x);
+        int y = (int)(texture.height * uv.y);
+
+        Color[] colors = new Color[penSize * penSize];
+        for (int i = 0; i < colors.Length; i++)
+        {
+            colors[i] = activeColor;
+        }
+        texture.SetPixels(x, y, penSize, penSize, colors);
+
+        texture.Apply();
     }
 
     public void SaveModelUV()
