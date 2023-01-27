@@ -199,6 +199,18 @@ public class ProceduralPlane : MonoBehaviour
                             uv[triangles[k + 0]].x = us.x;
                             uv[triangles[k + 0]].y = us.y;
                         }
+                        else if (i == j && us.x + 1 < texture.width)
+                        {
+                            texture.SetPixel(us.x - 1, us.y, texture.GetPixel(us.x, us.y));
+                        }
+                        else if (i == (resolution - 1) && us.y + 1 < texture.height)
+                        {
+                            texture.SetPixel(us.x - 1, us.y, texture.GetPixel(us.x, us.y));
+                        }
+                        else if (j == 0 && us.x - 1 > 0)
+                        {
+                            texture.SetPixel(us.x - 1, us.y, texture.GetPixel(us.x, us.y));
+                        }
                         else
                         {
                             /*
@@ -242,6 +254,18 @@ public class ProceduralPlane : MonoBehaviour
                             SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[t]]);
                             uv[triangles[t]].x = us.x;
                             uv[triangles[t]].y = us.y;
+                        }
+                        else if (i == j && us.x + 1 < texture.width)
+                        {
+                            texture.SetPixel(us.x - 1, us.y, texture.GetPixel(us.x, us.y));
+                        }
+                        else if (i == (resolution - 1) && us.y + 1 < texture.height)
+                        {
+                            texture.SetPixel(us.x - 1, us.y, texture.GetPixel(us.x, us.y));
+                        }
+                        else if (j == 0 && us.x - 1 > 0)
+                        {
+                            texture.SetPixel(us.x - 1, us.y, texture.GetPixel(us.x, us.y));
                         }
                         else
                         {
