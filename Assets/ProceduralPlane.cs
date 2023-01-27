@@ -22,11 +22,6 @@ public class ProceduralPlane : MonoBehaviour
     {
         meshFilter = GetComponent<MeshFilter>();
 
-        for (int i = 0; i < meshFilter.mesh.uv.Length; i++)
-        {
-            Debug.Log(i + " : (" + meshFilter.sharedMesh.uv[i].x + ", " + meshFilter.sharedMesh.uv[i].y + ")");
-        }
-
         Color[] colors =  new Color[meshFilter.mesh.vertexCount];
 
         for (int i = 0; i < colors.Length; i++)
@@ -77,8 +72,6 @@ public class ProceduralPlane : MonoBehaviour
 
     private void HandleInput()
     {
-        Plane plane = new Plane(Vector3.back, 0);
-
         var meshFilter = GetComponent<MeshFilter>();
 
         var mesh = meshFilter.mesh;
@@ -86,11 +79,16 @@ public class ProceduralPlane : MonoBehaviour
 
         Vector3 hitWorldPosition = Vector3.zero;
 
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        CastRayToPosition(Input.mousePosition);
+        CastRayToPosition(new Vector2(Input.mousePosition.x + penSize, Input.mousePosition.y));
+        CastRayToPosition(new Vector2(Input.mousePosition.x - penSize, Input.mousePosition.y));
+        CastRayToPosition(new Vector2(Input.mousePosition.x, Input.mousePosition.y + penSize));
+        CastRayToPosition(new Vector2(Input.mousePosition.x, Input.mousePosition.y - penSize));
 
+        texture.Apply();
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         var hits = Physics.RaycastAll(ray);
-        int hitTriangleId = -1;
-        Vector2 hitTriangleUV = Vector2.left;
 
         float minDist = float.PositiveInfinity;
         foreach (var hit in hits)
@@ -100,12 +98,8 @@ public class ProceduralPlane : MonoBehaviour
             {
                 minDist = newDist;
                 hitWorldPosition = hit.point;
-                hitTriangleId = hit.triangleIndex;
-                hitTriangleUV = hit.textureCoord;
             }
         }
-        if(!(hitTriangleUV.x < 0))
-            PaintTexture(hitTriangleUV, activeColor);
 
         minDist = Vector3.Distance(worldVertices[0], hitWorldPosition);
         var minIds = new List<int>();
@@ -143,35 +137,16 @@ public class ProceduralPlane : MonoBehaviour
         }
 
         meshFilter.mesh.colors = colors;
-
-        //OnVertexColorUpdate(minId);
     }
 
-    public void SetActiveColor(string hexColor)
+    private void CastRayToPosition(Vector2 position)
     {
-        Color outColor;
-        if(ColorUtility.TryParseHtmlString(hexColor, out outColor))
-        {
-            activeColor = outColor;
-        }
-        else
-        {
-            Debug.Log("Could not parse color");
-        }
-    }
-
-    public void RotateModelVertically(int value)
-    {
-        transform.Rotate(Vector3.right, value);
-
-        UpdateWorldVerticesPosition();
-    }
-
-    public void RotateModelHorizontally(int value)
-    {
-        transform.Rotate(Vector3.up, value);
-
-        UpdateWorldVerticesPosition();
+        Ray ray = Camera.main.ScreenPointToRay(position);
+        RaycastHit hit = new RaycastHit();
+        Physics.Raycast(ray, out hit, Vector3.Distance(Camera.main.transform.position, this.transform.position));
+        
+        if (hit.collider != null)
+            PaintTexture(hit.textureCoord, activeColor);
     }
 
     private void UpdateWorldVerticesPosition()
@@ -194,44 +169,93 @@ public class ProceduralPlane : MonoBehaviour
 
         for (int k = 0; k < triangles.Length; k += 3)
         {
-            for (int i = 0; i < resolution; i++)
+            if ( k % 2 != 0)
             {
-                for (int j = 0; j <= i; j++)
+                for (int i = 0; i < resolution; i++)
                 {
-                    us.x = j + ud.x;
-                    us.y = i + ud.y;
+                    for (int j = 0; j <= i; j++)
+                    {
+                        us.x = j + ud.x;
+                        us.y = i + ud.y;
 
-                    if (i == 0 && j == 0)
-                    {
-                        SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 0]]);
-                        uv[triangles[k + 0]].x = us.x;
-                        uv[triangles[k + 0]].y = us.y;
-                    }
-                    else if (i == (resolution - 1) && j == 0)
-                    {
-                        SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 1]]);
+                        if (i == 0 && j == 0)
+                        {
+                            SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 1]]);
+                            uv[triangles[k + 1]].x = us.x;
+                            uv[triangles[k + 1]].y = us.y;
+                        }
+                        else if (i == (resolution - 1) && j == 0)
+                        {
+                            SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 2]]);
 
-                        var meanColor = (meshFilter.mesh.colors[triangles[k + 0]] + meshFilter.mesh.colors[triangles[k + 2]]) / 2;
-                        SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);
-                        uv[triangles[k + 1]].x = us.x;
-                        uv[triangles[k + 1]].y = us.y;
-                    }
-                    else if (i == (resolution - 1) && j == (resolution - 1))
-                    {
-                        SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 2]]);
-                        uv[triangles[k + 2]].x = us.x;
-                        uv[triangles[k + 2]].y = us.y;
-                    }
-                    else
-                    {
-                        /*
-                        var meanColor = (meshFilter.mesh.colors[triangles[k + 0]] + meshFilter.mesh.colors[triangles[k + 2]] + meshFilter.mesh.colors[triangles[k + 0]]) / 3;
-                        SetPixel(textureColors, us.x , us.y, meanColor);
-                        SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);*/
+                            var meanColor = (meshFilter.mesh.colors[triangles[k + 0]] + meshFilter.mesh.colors[triangles[k + 2]]) / 2;
+                            SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);
+                            uv[triangles[k + 2]].x = us.x;
+                            uv[triangles[k + 2]].y = us.y;
+                        }
+                        else if (i == (resolution - 1) && j == (resolution - 1))
+                        {
+                            SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[k + 0]]);
+                            uv[triangles[k + 0]].x = us.x;
+                            uv[triangles[k + 0]].y = us.y;
+                        }
+                        else
+                        {
+                            /*
+                            var meanColor = (meshFilter.mesh.colors[triangles[k + 0]] + meshFilter.mesh.colors[triangles[k + 2]] + meshFilter.mesh.colors[triangles[k + 0]]) / 3;
+                            SetPixel(textureColors, us.x , us.y, meanColor);
+                            SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);*/
 
+                        }
                     }
                 }
             }
+            else
+            {
+                for (int i = 0; i < resolution; i++)
+                {
+                    for (int j = 0; j <= i; j++)
+                    {
+                        us.x = j + ud.x;
+                        us.y = i + ud.y;
+
+                        if (i == 0 && j == 0)
+                        {
+                            int t = k + 1;
+                            SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[t]]);
+                            uv[triangles[t]].x = us.x;
+                            uv[triangles[t]].y = us.y;
+                        }
+                        else if (i == (resolution - 1) && j == 0)
+                        {
+                            int t = k + 0;
+                            SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[t]]);
+
+                            var meanColor = (meshFilter.mesh.colors[triangles[k + 0]] + meshFilter.mesh.colors[triangles[k + 2]]) / 2;
+                            SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);
+                            uv[triangles[t]].x = us.x;
+                            uv[triangles[t]].y = us.y;
+                        }
+                        else if (i == (resolution - 1) && j == (resolution - 1))
+                        {
+                            int t = k + 2;
+                            SetPixel(textureColors, us.x, us.y, meshFilter.mesh.colors[triangles[t]]);
+                            uv[triangles[t]].x = us.x;
+                            uv[triangles[t]].y = us.y;
+                        }
+                        else
+                        {
+                            /*
+                            var meanColor = (meshFilter.mesh.colors[triangles[k + 0]] + meshFilter.mesh.colors[triangles[k + 2]] + meshFilter.mesh.colors[triangles[k + 0]]) / 3;
+                            SetPixel(textureColors, us.x , us.y, meanColor);
+                            SetPixel(textureColors, i + ud.x, j + ud.y, meanColor);*/
+
+                        }
+                    }
+                }
+            }
+
+
             ud.x += resolution;
             if(ud.x >= width)
             {
@@ -265,14 +289,16 @@ public class ProceduralPlane : MonoBehaviour
         int x = (int)(texture.width * uv.x);
         int y = (int)(texture.height * uv.y);
 
-        Color[] colors = new Color[penSize * penSize];
+        int w = (x + penSize) < texture.width ? penSize : texture.width - x;
+        int h = (y + penSize) < texture.height ? penSize : texture.height - y;
+
+        Color[] colors = new Color[h * w];
         for (int i = 0; i < colors.Length; i++)
         {
             colors[i] = activeColor;
         }
-        texture.SetPixels(x, y, penSize, penSize, colors);
 
-        texture.Apply();
+        texture.SetPixels(x, y, w, h, colors);
     }
 
     public void SaveModelUV()
@@ -341,6 +367,34 @@ public class ProceduralPlane : MonoBehaviour
         texture.SetPixels(0, 0, width, height, colors);
         texture.Apply();
     }
+
+    public void SetActiveColor(string hexColor)
+    {
+        Color outColor;
+        if (ColorUtility.TryParseHtmlString(hexColor, out outColor))
+        {
+            activeColor = outColor;
+        }
+        else
+        {
+            Debug.Log("Could not parse color");
+        }
+    }
+
+    public void RotateModelVertically(int value)
+    {
+        transform.Rotate(Vector3.right, value);
+
+        UpdateWorldVerticesPosition();
+    }
+
+    public void RotateModelHorizontally(int value)
+    {
+        transform.Rotate(Vector3.up, value);
+
+        UpdateWorldVerticesPosition();
+    }
+
 
     private void SetPixel(Color[] texture, int x, int y, Color color)
     {
